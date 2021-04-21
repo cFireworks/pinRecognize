@@ -49,20 +49,16 @@ def boxSet2data(objBndSet, img_shape):
         return 表示一个电气图元 上、下、左、右分别对应的点存在的相对坐标情况(a_up, a_down, a_left, a_right),不存在为None
     """
     h, w = img_shape[0], img_shape[1]
-    a_up = (objBndSet["up"][2]-objBndSet["up"][0]-w) / \
-        w if "up" in objBndSet else 1024
-    a_down = (objBndSet["down"][2]-objBndSet["down"][0]-w) / \
-        w if "down" in objBndSet else 1024
-    a_left = (objBndSet["left"][3]-objBndSet["left"][1]-h) / \
-        h if "left" in objBndSet else 1024
-    a_right = (objBndSet["right"][3]-objBndSet["right"]
-               [1]-h)/h if "right" in objBndSet else 1024
+    a_up = (objBndSet["up"][2]+objBndSet["up"][0]-w) / w if "up" in objBndSet else 1024
+    a_down = (objBndSet["down"][2]+objBndSet["down"][0]-w) / w if "down" in objBndSet else 1024
+    a_left = (objBndSet["left"][3]+objBndSet["left"][1]-h) / h if "left" in objBndSet else 1024
+    a_right = (objBndSet["right"][3]+objBndSet["right"][1]-h) / h if "right" in objBndSet else 1024
     return (a_up, a_down, a_left, a_right)
 
 
 class DataGenerator(keras.utils.Sequence):
 
-    def __init__(self, img_dir, anno_dir, list_IDs, batch_size=1, img_size=(512, 512),
+    def __init__(self, img_dir, anno_dir, list_IDs, batch_size=1, img_size=(224, 224,3),
                  *args, **kwargs):
         """
         self.list_IDs:存放所有需要训练的图片文件名的列表。
@@ -89,11 +85,10 @@ class DataGenerator(keras.utils.Sequence):
         """
         该函数返回每次我们需要的经过处理的数据。
         """
-
         indices = self.indices[index*self.batch_size:(index+1)*self.batch_size]
         list_IDs_temp = [self.list_IDs[k] for k in indices]
-        X, Y = self.__data_generation(list_IDs_temp)
-        return X, Y
+        X, Y_prob, Y_alias = self.__data_generation(list_IDs_temp)
+        return X, [Y_prob, Y_alias]
 
     def on_epoch_end(self):
         """
@@ -107,7 +102,7 @@ class DataGenerator(keras.utils.Sequence):
         """
             给定文件名，生成数据。
         """
-        X = np.empty((self.batch_size, *self.img_size, 1))
+        X = np.empty((self.batch_size, *self.img_size))
         Y_cls = np.empty((self.batch_size, 4), dtype=np.float32)
         Y_reg = np.empty((self.batch_size, 4), dtype=np.float32)
 
