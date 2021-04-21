@@ -1,6 +1,5 @@
 import tensorflow as tf
 from tensorflow import keras
-import pandas as pd
 import numpy as np
 import io
 import sys
@@ -39,7 +38,6 @@ def GetAnnotBoxLoc(AnotPath: str) -> dict:
         else:
             # 如果字典结构中没有这个类别，那么这个目标框就直接赋值给其值吧
             ObjBndBoxSet[ObjName] = [BndBoxLoc]
-    print(ObjBndBoxSet)
     return ObjBndBoxSet
 
 
