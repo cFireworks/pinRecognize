@@ -58,7 +58,7 @@ def boxSet2data(objBndSet, img_shape):
 
 class DataGenerator(keras.utils.Sequence):
 
-    def __init__(self, img_dir, anno_dir, list_IDs, batch_size=1, img_size=(224, 224,3),
+    def __init__(self, img_dir, anno_dir, list_IDs, batch_size=1, img_size=(224, 224,3), epoch_len=1000
                  *args, **kwargs):
         """
         self.list_IDs:存放所有需要训练的图片文件名的列表。
@@ -70,6 +70,7 @@ class DataGenerator(keras.utils.Sequence):
         self.anno_dir = anno_dir
         self.list_IDs = list_IDs
         self.batch_size = batch_size
+        self.epoch_len = epoch_len
         self.img_size = img_size
         self.img_dir = img_dir
         self.on_epoch_end()
@@ -108,12 +109,21 @@ class DataGenerator(keras.utils.Sequence):
 
         for i, ID in enumerate(list_IDs_temp):
             img = cv2.imread(self.img_dir+ID+".png")
+            max_edge = max(img.shape[0], img.shape[1])
+            new_img = np.zeros((max_edge, max_edge, 3), np.uint8)
+            new_img.fill(255)
+            top_left_h = (max_edge - img.shape[0])//2
+            top_left_w = (max_edge - img.shape[1])//2
+            r_h = max_edge / img.shape[0]
+            r_w = max_edge / img.shape[1]
+            new_img[top_left_h:top_left_h+img.shape[0], top_left_w:top_left_w+img.shape[1]] = img
+            cv2.resize(new_img, self.img_size)
             X[i, ] = img
             anno_pth = os.path.join(self.anno_dir, ID+".xml")
             objSet = GetAnnotBoxLoc(anno_pth)
             a = boxSet2data(objSet, img.shape)
 
             Y_cls[i, ] = np.array([1 if n <=1 else 0 for n in a])
-            Y_reg[i, ] = np.array([a[0], a[1], a[2], a[3]])
+            Y_reg[i, ] = np.array([a[0]/r_w, a[1]/r_w, a[2]/r_h, a[3]/r_h])
 
         return X, Y_cls, Y_reg
