@@ -39,6 +39,7 @@ def GetAnnotBoxLoc(AnotPath: str) -> dict:
         else:
             # 如果字典结构中没有这个类别，那么这个目标框就直接赋值给其值吧
             ObjBndBoxSet[ObjName] = [BndBoxLoc]
+    print(ObjBndBoxSet)
     return ObjBndBoxSet
 
 
@@ -49,16 +50,16 @@ def boxSet2data(objBndSet, img_shape):
         return 表示一个电气图元 上、下、左、右分别对应的点存在的相对坐标情况(a_up, a_down, a_left, a_right),不存在为None
     """
     h, w = img_shape[0], img_shape[1]
-    a_up = (objBndSet["up"][2]+objBndSet["up"][0]-w) / w if "up" in objBndSet else 1024
-    a_down = (objBndSet["down"][2]+objBndSet["down"][0]-w) / w if "down" in objBndSet else 1024
-    a_left = (objBndSet["left"][3]+objBndSet["left"][1]-h) / h if "left" in objBndSet else 1024
-    a_right = (objBndSet["right"][3]+objBndSet["right"][1]-h) / h if "right" in objBndSet else 1024
+    a_up = (objBndSet["up"][0][2]+objBndSet["up"][0][0]-w) / w if "up" in objBndSet else 1024
+    a_down = (objBndSet["down"][0][2]+objBndSet["down"][0][0]-w) / w if "down" in objBndSet else 1024
+    a_left = (objBndSet["left"][0][3]+objBndSet["left"][0][1]-h) / h if "left" in objBndSet else 1024
+    a_right = (objBndSet["right"][0][3]+objBndSet["right"][0][1]-h) / h if "right" in objBndSet else 1024
     return (a_up, a_down, a_left, a_right)
 
 
 class DataGenerator(keras.utils.Sequence):
 
-    def __init__(self, img_dir, anno_dir, list_IDs, batch_size=1, img_size=(224, 224,3), epoch_len=1000
+    def __init__(self, img_dir, anno_dir, list_IDs, batch_size=1, img_size=(224, 224,3), epoch_len=1000,
                  *args, **kwargs):
         """
         self.list_IDs:存放所有需要训练的图片文件名的列表。
@@ -108,7 +109,8 @@ class DataGenerator(keras.utils.Sequence):
         Y_reg = np.empty((self.batch_size, 4), dtype=np.float32)
 
         for i, ID in enumerate(list_IDs_temp):
-            img = cv2.imread(self.img_dir+ID+".png")
+            im_pth = os.path.join(self.img_dir, ID+".png")
+            img = cv2.imread(im_pth)
             max_edge = max(img.shape[0], img.shape[1])
             new_img = np.zeros((max_edge, max_edge, 3), np.uint8)
             new_img.fill(255)
@@ -117,8 +119,8 @@ class DataGenerator(keras.utils.Sequence):
             r_h = max_edge / img.shape[0]
             r_w = max_edge / img.shape[1]
             new_img[top_left_h:top_left_h+img.shape[0], top_left_w:top_left_w+img.shape[1]] = img
-            cv2.resize(new_img, self.img_size)
-            X[i, ] = img
+            new_img = cv2.resize(new_img, (self.img_size[0], self.img_size[1]))
+            X[i, ] = new_img
             anno_pth = os.path.join(self.anno_dir, ID+".xml")
             objSet = GetAnnotBoxLoc(anno_pth)
             a = boxSet2data(objSet, img.shape)

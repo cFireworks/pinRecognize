@@ -2,11 +2,14 @@
 # @Descripttion: 
 # @Date: 2021-04-20 21:47:51
 # @Author: cfireworks
-# @LastEditTime: 2021-04-21 15:44:03
+# @LastEditTime: 2021-04-21 22:30:22
 '''
+import os
+import tensorflow as tf
 from resnet import ResNet34
 from keras.layers import Input, Dense, GlobalAveragePooling2D, Flatten, Conv2D
 from keras import backend as K
+from keras.models import Model
 from keras.objectives import categorical_crossentropy
 
 
@@ -18,7 +21,6 @@ def createPinNet(input_shape=(224, 224, 3)):
     input_layer = Input(input_shape)
     x = ResNet34(input_layer, with_head=False)
     x = GlobalAveragePooling2D()(x)
-    x = Flatten()(x)
     out_probs = Dense(4, activation='softmax')(x)
     out_alias =  Dense(4, activation='linear')(x)
     model = Model(inputs=input_layer, outputs=[out_probs, out_alias])

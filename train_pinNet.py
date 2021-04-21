@@ -2,8 +2,9 @@
 # @Descripttion: 
 # @Date: 2021-04-20 22:46:54
 # @Author: cfireworks
-# @LastEditTime: 2021-04-21 22:13:00
+# @LastEditTime: 2021-04-21 22:30:38
 '''
+import os
 import tensorflow as tf
 from keras import backend as K
 from keras.optimizers import Adam, SGD, RMSprop
@@ -14,6 +15,7 @@ from data_prepare import DataGenerator
 
 
 def train():
+    input_shape_img = (224,224,3)
     model = createPinNet(input_shape_img)
 
     optimizer = Adam(lr=1e-5)
